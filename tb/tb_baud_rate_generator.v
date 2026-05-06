@@ -46,7 +46,6 @@ module tb_baud_rate_generator;
             if (prev_tx_time != 0) begin
                 baud_rate = 1_000_000_000.0 / ($time - prev_tx_time);
             end
-            prev_tx_time = $time;
         end
     end
 
