@@ -77,14 +77,6 @@ module tb_baud_rate_generator;
                  $time, cycle_count, dut.tx_counter, dut.rx_counter, tx_enb, rx_enb);
     end
 
-    // Periodic Measurement Display
-    always @(posedge tx_enb) begin
-        if (tx_pulse % 50 == 0 && tx_pulse > 5) begin
-            $display("   [MEAS] Pulses=%0d | Baud Rate = %.2f", 
-                     tx_pulse, baud_rate);
-        end
-    end
-
     // Final Summary
     initial begin
         #800_000;   // Run long enough for good measurement
@@ -96,7 +88,7 @@ module tb_baud_rate_generator;
         $display("TX Pulses              : %0d", tx_pulse);
         $display("Measured TX Baud Rate  : %.2f baud", baud_rate);
         $display("Target Baud Rate       : 9600 baud");
-        $display("Error                  : %.4f %%", ((baud_rate - 9600)/9600)*100);
+        $display("Error                  : %.4f %%", ((9600 - baud_rate)/9600)*100);
         $display("====================================================================");
         $finish;
     end
