@@ -3,32 +3,32 @@
 //==================================================================
 
 module uart_tx (
-    input wire       clk,
-    input wire       rst_n,
-    input wire       tx_enb,     // Baud rate tick from baud generator
-    input wire [7:0] data_in,    // Data byte from FIFO / host
-    input wire       enb,        // Load new data (valid signal)
+    input  wire       clk,
+    input  wire       rst_n,
+    input  wire       tx_enb,     // Baud rate tick (one clk wide)
+    input  wire [7:0] data_in,
+    input  wire       enb,        // Load new data
     
-    output reg       tx,         // Serial output
-    output reg       busy        // High when transmitting
+    output reg        tx,
+    output reg        busy
 );
 
     reg [1:0] state;
     reg [7:0] shift_reg;
-    reg [2:0] bit_cnt;
+    reg [3:0] bit_cnt;
 
-    parameter IDLE  = 2'b00;
-    parameter START = 2'b01;
-    parameter DATA  = 2'b10;
-    parameter STOP  = 2'b11;
+    localparam IDLE  = 2'b00;
+    localparam START = 2'b01;
+    localparam DATA  = 2'b10;
+    localparam STOP  = 2'b11;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state     <= IDLE;
-            tx        <= 1'b1;     // Idle state is high
+            tx        <= 1'b1;
             busy      <= 1'b0;
             shift_reg <= 8'b0;
-            bit_cnt   <= 3'b0;
+            bit_cnt   <= 4'b0;
         end 
         else begin
             case (state)
@@ -36,28 +36,30 @@ module uart_tx (
                 IDLE: begin
                     tx   <= 1'b1;
                     busy <= 1'b0;
+                    
                     if (enb) begin
                         shift_reg <= data_in;
                         state     <= START;
                         busy      <= 1'b1;
+                        // tx will be set in START state
                     end
                 end
 
                 START: begin
+                    tx <= 1'b0;                    // Start bit (driven continuously)
                     if (tx_enb) begin
-                        tx        <= 1'b0;     // Start bit
-                        state     <= DATA;
-                        bit_cnt   <= 3'b0;
+                        state   <= DATA;
+                        bit_cnt <= 4'd0;
                     end
                 end
 
                 DATA: begin
                     if (tx_enb) begin
-                        tx        <= shift_reg[0];   // LSB first
+                        tx        <= shift_reg[0];      // LSB first
                         shift_reg <= shift_reg >> 1;
                         bit_cnt   <= bit_cnt + 1;
-                        
-                        if (bit_cnt == 3'd7) begin
+
+                        if (bit_cnt == 4'd7) begin
                             state <= STOP;
                         end
                     end
@@ -65,16 +67,13 @@ module uart_tx (
 
                 STOP: begin
                     if (tx_enb) begin
-                        tx    <= 1'b1;      // Stop bit
+                        tx    <= 1'b1;         // Stop bit
                         state <= IDLE;
                         busy  <= 1'b0;
                     end
                 end
 
-                default: begin
-                    state <= IDLE;
-                end
-                
+                default: state <= IDLE;
             endcase
         end
     end
