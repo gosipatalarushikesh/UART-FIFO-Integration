@@ -1,5 +1,5 @@
 //==================================================================
-// uart_rx.v - Sampling at count 8 (center of bit)
+// uart_rx.v - Fixed Version (Sampling at center)
 //==================================================================
 
 module uart_rx (
@@ -23,6 +23,7 @@ module uart_rx (
     localparam DATA  = 2'b10;
     localparam STOP  = 2'b11;
 
+    // Falling edge detection
     always @(posedge clk) begin
         rx_d1 <= rx;
     end
@@ -42,19 +43,23 @@ module uart_rx (
             case (state)
                 
                 IDLE: begin
-                    if (!rx && rx_d1) begin           // Falling edge
-                        state      <= START;
-                        sample_cnt <= 4'b0;
+                    sample_cnt <= 4'b0;
+                    if (!rx && rx_d1) begin        // Falling edge
+                        state <= START;
                     end
                 end
 
                 START: begin
                     if (rx_enb) begin
                         sample_cnt <= sample_cnt + 1;
-                      if (sample_cnt == 4'd8) begin   // Wait half bit
-                            state      <= DATA;
-                            sample_cnt <= 4'b0;
-                            bit_cnt    <= 3'b0;
+                        if (sample_cnt == 4'd7) begin     // Sample middle of start bit
+                            if (rx == 1'b0) begin         // Valid start bit
+                                state      <= DATA;
+                                sample_cnt <= 4'b0;
+                                bit_cnt    <= 3'b0;
+                            end else begin
+                                state <= IDLE;            // False start
+                            end
                         end
                     end
                 end
@@ -62,8 +67,8 @@ module uart_rx (
                 DATA: begin
                     if (rx_enb) begin
                         sample_cnt <= sample_cnt + 1;
-                      if (sample_cnt == 4'd8) begin     // Sample at center
-                            shift_reg  <= {rx, shift_reg[7:1]};
+                        if (sample_cnt == 4'd7) begin     // Sample at center
+                            shift_reg  <= {rx, shift_reg[7:1]};   // LSB first
                             sample_cnt <= 4'b0;
                             bit_cnt    <= bit_cnt + 1;
 
@@ -77,7 +82,7 @@ module uart_rx (
                 STOP: begin
                     if (rx_enb) begin
                         sample_cnt <= sample_cnt + 1;
-                      if (sample_cnt == 4'd8) begin
+                        if (sample_cnt == 4'd7) begin
                             if (rx == 1'b1) begin          // Good stop bit
                                 data_out   <= shift_reg;
                                 data_valid <= 1'b1;
