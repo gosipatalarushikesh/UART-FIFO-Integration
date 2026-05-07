@@ -53,7 +53,8 @@ module uart_tx (
 
                 DATA: begin
                     if (tx_enb) begin
-                        tx        <= shift_reg[bit_cnt];   // LSB first
+                        tx        <= shift_reg[0];   // LSB first
+                        shift_reg <= shift_reg >> 1;
                         bit_cnt   <= bit_cnt + 1;
                         
                         if (bit_cnt == 3'd7) begin
