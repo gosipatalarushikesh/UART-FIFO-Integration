@@ -1,132 +1,116 @@
+// Code your design here
 //==================================================================
-// uart_rx.v - UART Receiver (8x oversampling, center sampling)
+// uart_rx.v - PROPERLY ALIGNED VERSION
 //==================================================================
-//
-// Description:
-//   - Asynchronous UART receiver with 8x oversampling.
-//   - Detects start bit on falling edge.
-//   - Samples data at the center of each bit period.
-//   - LSB first, 8 data bits, 1 stop bit (no parity).
-//   - Uses rx_enb as baud-rate enable (tick every 1/8th of bit period).
-//
-// Note: rx_enb should be asserted once every baud period / 8
-//       (i.e., 8x baud rate clock enable).
-//
-//==================================================================
+
+`timescale 1ns / 1ps
 
 module uart_rx (
-    input wire       clk,        // System clock
-    input wire       rst_n,      // Active-low asynchronous reset
-    input wire       rx_enb,     // Baud rate enable (8x oversampling tick)
-    input wire       rx,         // Serial data input
+    input wire       clk,
+    input wire       rst_n,
+    input wire       rx_enb,
+    input wire       rx,
     
-    output reg [7:0] data_out,   // Received byte (valid when data_valid=1)
-    output reg       data_valid  // Pulse indicating valid data on data_out
+    output reg [7:0] data_out,
+    output reg       data_valid,
+    output reg       ready
 );
 
-    // State machine states
     reg [1:0] state;
-    reg [3:0] sample_cnt;   // Counts 0-7 for 8x oversampling
-    reg [2:0] bit_cnt;      // Counts 0-7 for 8 data bits
-    reg [7:0] shift_reg;    // Shift register for incoming data (LSB first)
-    reg       rx_d1;        // Delayed rx for edge detection
+    reg [3:0] sample_cnt;
+    reg [2:0] bit_cnt;
+    reg [7:0] shift_reg;
+    
+    // Synchronize rx
+    reg rx_sync;
 
-    localparam IDLE  = 2'b00;
-    localparam START = 2'b01;
-    localparam DATA  = 2'b10;
-    localparam STOP  = 2'b11;
-
-    //====================================================================
-    // Falling edge detection on RX line
-    //====================================================================
-    always @(posedge clk) begin
-        rx_d1 <= rx;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
+            rx_sync <= 1'b1;
+        else
+            rx_sync <= rx;
     end
 
-    //====================================================================
-    // Main UART Receiver FSM
-    //====================================================================
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            state       <= IDLE;
-            data_out    <= 8'b0;
-            data_valid  <= 1'b0;
-            shift_reg   <= 8'b0;
-            sample_cnt  <= 4'b0;
-            bit_cnt     <= 3'b0;
+            state      <= 2'b00;
+            data_out   <= 8'b0;
+            data_valid <= 1'b0;
+            ready      <= 1'b1;
+            shift_reg  <= 8'b0;
+            sample_cnt <= 4'b0;
+            bit_cnt    <= 3'b0;
         end 
         else begin
-            data_valid <= 1'b0;   // Default: pulse signal
+            data_valid <= 1'b0;
 
             case (state)
                 
-                //============================================================
-                IDLE: begin
-                //============================================================
+                2'b00: begin  // IDLE
+                    ready <= 1'b1;
                     sample_cnt <= 4'b0;
-                    if (!rx && rx_d1) begin        // Falling edge detected
-                        state <= START;            // Potential start bit
+                    bit_cnt <= 3'b0;
+                    
+                    // Wait for rx_enb AND start bit
+                    if (!rx_sync && rx_enb) begin
+                        state <= 2'b01;
+                        ready <= 1'b0;
+                        sample_cnt <= 4'b1;  // Start counting from 1
                     end
                 end
 
-                //============================================================
-                START: begin
-                //============================================================
+                2'b01: begin  // START
                     if (rx_enb) begin
-                        sample_cnt <= sample_cnt + 1;
-                        
-                        // Sample at center of start bit (after 8 ticks)
-                        if (sample_cnt == 4'd7) begin
-                            if (rx == 1'b0) begin         // Valid start bit (still low)
-                                state      <= DATA;
+                        if (sample_cnt == 4'd8) begin
+                            if (!rx_sync) begin
+                                // Valid start bit
+                                state <= 2'b10;
                                 sample_cnt <= 4'b0;
-                                bit_cnt    <= 3'b0;
+                                bit_cnt <= 3'b0;
                             end else begin
-                                state <= IDLE;            // False start, abort
+                                // False start
+                                state <= 2'b00;
+                                ready <= 1'b1;
                             end
+                        end else begin
+                            sample_cnt <= sample_cnt + 1'b1;
                         end
                     end
                 end
 
-                //============================================================
-                DATA: begin
-                //============================================================
+                2'b10: begin  // DATA
                     if (rx_enb) begin
-                        sample_cnt <= sample_cnt + 1;
-                        
-                        // Sample at center of each data bit
-                        if (sample_cnt == 4'd7) begin
-                            shift_reg  <= {rx, shift_reg[7:1]};  // Shift in LSB first
+                        if (sample_cnt == 4'd15) begin
                             sample_cnt <= 4'b0;
-                            bit_cnt    <= bit_cnt + 1;
-
                             if (bit_cnt == 3'd7) begin
-                                state <= STOP;   // All 8 bits received
+                                state <= 2'b11;
+                            end else begin
+                                bit_cnt <= bit_cnt + 1'b1;
+                            end
+                        end else begin
+                            sample_cnt <= sample_cnt + 1'b1;
+                            // Sample at count 8
+                            if (sample_cnt == 4'd7) begin
+                                shift_reg <= {rx_sync, shift_reg[7:1]};
                             end
                         end
                     end
                 end
 
-                //============================================================
-                STOP: begin
-                //============================================================
+                2'b11: begin  // STOP
                     if (rx_enb) begin
-                        sample_cnt <= sample_cnt + 1;
-                        
-                        // Sample at center of stop bit
-                        if (sample_cnt == 4'd7) begin
-                            if (rx == 1'b1) begin          // Valid stop bit (high)
-                                data_out   <= shift_reg;
+                        if (sample_cnt == 4'd15) begin
+                            if (rx_sync) begin
+                                data_out <= shift_reg;
                                 data_valid <= 1'b1;
                             end
-                            // else: framing error (stop bit not high) - currently ignored
-                            
-                            state <= IDLE;
+                            state <= 2'b00;
+                            ready <= 1'b1;
+                        end else begin
+                            sample_cnt <= sample_cnt + 1'b1;
                         end
                     end
                 end
-
-                default: state <= IDLE;
             endcase
         end
     end
