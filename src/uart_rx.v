@@ -15,6 +15,7 @@
 //   - Stop bit verification
 //   - Synchronized RX input
 //   - Ready flag to indicate receiver idle/completion
+//   - Data valid pulse for downstream FIFO write
 //
 // Assumptions:
 //   - rx_enb generates a pulse at 16x baud rate
@@ -37,6 +38,7 @@ module uart_rx (
     input wire       rx,         // Serial RX input line
 
     output reg [7:0] data_out,   // Parallel received data byte
+    output reg       data_valid, // Single-cycle pulse when valid data ready
     output reg       ready       // Receiver ready/idle indicator
 );
 
@@ -85,6 +87,7 @@ module uart_rx (
 
             state      <= 2'b00;
             data_out   <= 8'b0;
+            data_valid <= 1'b0;
             ready      <= 1'b1;
 
             shift_reg  <= 8'b0;
@@ -93,6 +96,12 @@ module uart_rx (
 
         end 
         else begin
+
+            //------------------------------------------------------
+            // Default: data_valid is a single-cycle pulse
+            // Deassert it if previously asserted
+            //------------------------------------------------------
+            data_valid <= 1'b0;
 
             case (state)
 
@@ -225,7 +234,8 @@ module uart_rx (
                             if (rx_sync) begin
 
                                 // Transfer received byte
-                                data_out <= shift_reg;
+                                data_out   <= shift_reg;
+                                data_valid <= 1'b1;   // PULSE: valid data ready
 
                             end
 
