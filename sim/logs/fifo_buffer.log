@@ -1,0 +1,69 @@
+[2026-05-10 10:15:55 UTC] iverilog '-Wall' '-g2012' design.sv testbench.sv  && unbuffer vvp a.out  
+warning: Some design elements have no explicit time unit and/or
+       : time precision. This may cause confusing timing results.
+       : Affected design elements are:
+       :   -- module fifo declared here: design.sv:40
+VCD info: dumpfile fifo_waveform.vcd opened for output.
+
+==================================================
+              FIFO TESTBENCH START                
+==================================================
+
+VCD file: fifo_waveform.vcd
+To view waveforms: gtkwave fifo_waveform.vcd
+
+Test 1 : Check FIFO Empty Status After Reset
+PASS : FIFO is empty after reset
+
+Test 2 : Single Write and Read Operation
+  After Write : full=0, empty=0
+ERROR: testbench.sv:411: ERROR: Read attempted when FIFO is empty at time                55000
+       Time: 55000  Scope: tb_fifo
+  Read Data : 0xa5
+PASS
+
+Test 3 : Fill FIFO to Full Condition
+  full = 1 (expected 1)
+PASS : FIFO reached FULL state
+
+Test 4 : Read All FIFO Entries
+  Data[0] = 0x00 (expected 0x00000000)
+  Data[1] = 0x01 (expected 0x00000001)
+  Data[2] = 0x02 (expected 0x00000002)
+  Data[3] = 0x03 (expected 0x00000003)
+  Data[4] = 0x04 (expected 0x00000004)
+  Data[5] = 0x05 (expected 0x00000005)
+  Data[6] = 0x06 (expected 0x00000006)
+  Data[7] = 0x07 (expected 0x00000007)
+  Data[8] = 0x08 (expected 0x00000008)
+  Data[9] = 0x09 (expected 0x00000009)
+  Data[10] = 0x0a (expected 0x0000000a)
+  Data[11] = 0x0b (expected 0x0000000b)
+  Data[12] = 0x0c (expected 0x0000000c)
+  Data[13] = 0x0d (expected 0x0000000d)
+  Data[14] = 0x0e (expected 0x0000000e)
+  empty = 1 (expected 1)
+PASS : FIFO returned to EMPTY state
+
+Test 5 : Circular Buffer Wrap-around
+  Reading Data After Wrap-around:
+    Data[0] = 0x6c
+    Data[1] = 0x6d
+    Data[2] = 0xc8
+    Data[3] = 0xc9
+    Data[4] = 0xca
+    Data[5] = 0xcb
+    Data[6] = 0xcc
+    Data[7] = 0xcd
+    Data[8] = 0xce
+    Data[9] = 0xcf
+PASS : Wrap-around test completed successfully
+
+==================================================
+              ALL TESTS COMPLETED                 
+==================================================
+
+VCD file 'fifo_waveform.vcd' has been generated.
+To view: gtkwave fifo_waveform.vcd
+testbench.sv:399: $finish called at 825000 (1ps)
+Done
