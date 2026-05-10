@@ -14,7 +14,6 @@ A complete synthesizable UART controller with separate Transmit and Receive FIFO
 
 ## Repository Structure
 
-```bash
 uart-fifo-integration/
 ├── README.md
 ├── LICENSE                  # (Optional)
