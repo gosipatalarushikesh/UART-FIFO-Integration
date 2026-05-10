@@ -77,16 +77,17 @@ module baud_rate_generator (
             tx_counter <= 14'd0;
 
         end 
-        else if (tx_counter == 5208) begin
+        else if (tx_counter == 14'd5207) begin
 
             // Reset counter after baud interval
+            // Counts 0 to 5207 = 5208 cycles
             tx_counter <= 14'd0;
 
         end 
         else begin
 
             // Increment counter
-            tx_counter <= tx_counter + 1;
+            tx_counter <= tx_counter + 1'b1;
 
         end
     end
@@ -113,16 +114,17 @@ module baud_rate_generator (
             rx_counter <= 10'd0;
 
         end 
-        else if (rx_counter == 325) begin
+        else if (rx_counter == 10'd324) begin
 
             // Reset counter after oversampling interval
+            // Counts 0 to 324 = 325 cycles
             rx_counter <= 10'd0;
 
         end 
         else begin
 
             // Increment counter
-            rx_counter <= rx_counter + 1;
+            rx_counter <= rx_counter + 1'b1;
 
         end
     end
@@ -134,8 +136,8 @@ module baud_rate_generator (
     // reach terminal count values.
     //==============================================================
 
-    assign tx_enb = (tx_counter == 5208) ? 1'b1 : 1'b0;
+    assign tx_enb = (tx_counter == 14'd5207) ? 1'b1 : 1'b0;
 
-    assign rx_enb = (rx_counter == 325) ? 1'b1 : 1'b0;
+    assign rx_enb = (rx_counter == 10'd324) ? 1'b1 : 1'b0;
 
 endmodule
