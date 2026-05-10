@@ -55,7 +55,7 @@ module uart_top (
         .wr_data (tx_data_in),
         .wr_en   (tx_wr_en),
         .full    (tx_full),
-        .rd_en   (\~tx_fifo_empty && \~uart_tx_busy),   // Simple & Reliable
+        .rd_en   (~tx_fifo_empty && ~uart_tx_busy),   // Simple & Reliable
         .rd_data (tx_fifo_out),
         .empty   (tx_fifo_empty)
     );
@@ -68,7 +68,7 @@ module uart_top (
         .rst_n   (rst_n),
         .tx_enb  (tx_enb),
         .data_in (tx_fifo_out),
-        .enb     (\~tx_fifo_empty),        // Load when data available
+        .enb     (~tx_fifo_empty),        // Load when data available
         .tx      (tx),
         .busy    (uart_tx_busy)
     );
