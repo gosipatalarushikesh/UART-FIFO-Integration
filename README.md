@@ -13,6 +13,7 @@ A complete synthesizable UART controller with separate Transmit and Receive FIFO
 - Fully synthesizable
 
 ## Repository Structure
+```bash
 
 uart-fifo-integration/
 ├── README.md
@@ -37,6 +38,8 @@ uart-fifo-integration/
 └── docs/                    # Documentation
     ├── block_diagram.drawio
     └── architecture.md
+
+```
 
 ## Modules Overview
 
