@@ -1,0 +1,39 @@
+[2026-05-10 10:38:18 UTC] iverilog '-Wall' '-g2012' design.sv testbench.sv  && unbuffer vvp a.out  
+warning: Some design elements have no explicit time unit and/or
+       : time precision. This may cause confusing timing results.
+       : Affected design elements are:
+       :   -- module uart_tx declared here: design.sv:34
+Time(ns)     busy   tx    State      shift_reg
+-------------------------------------------------------------------
+         0   0      1     IDLE        00000000
+
+--- Sending 0xA5 ---
+    790000   1      1     START       10100101
+    810000   1      0     START       10100101
+   5210000   1      0     DATA        10100101
+  10450000   1      1     DATA        01010010
+  15670000   1      0     DATA        00101001
+  20910000   1      1     DATA        00010100
+  26130000   1      0     DATA        00001010
+  31350000   1      0     DATA        00000101
+  36590000   1      1     DATA        00000010
+  41810000   1      0     DATA        00000001
+  47050000   1      1     STOP        00000000
+  52270000   0      1     IDLE        00000000
+
+--- Sending 0x55 ---
+  52470000   1      1     START       01010101
+  52490000   1      0     START       01010101
+  57490000   1      0     DATA        01010101
+  62730000   1      1     DATA        00101010
+  67950000   1      0     DATA        00010101
+  73190000   1      1     DATA        00001010
+  78410000   1      0     DATA        00000101
+  83630000   1      1     DATA        00000010
+  88870000   1      0     DATA        00000001
+  94090000   1      1     DATA        00000000
+  99330000   1      0     STOP        00000000
+ 104550000   0      1     IDLE        00000000
+Test Completed
+testbench.sv:272: $finish called at 152510000 (1ps)
+Done
