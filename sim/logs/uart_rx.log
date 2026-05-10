@@ -1,0 +1,14 @@
+[2026-05-10 10:46:53 UTC] iverilog '-Wall' '-g2012' design.sv testbench.sv  && unbuffer vvp a.out  
+================================================
+              UART RX TEST START                
+================================================
+Sent: 0xA5 | Received: 0xa5 | PASS
+Sent: 0xFF | Received: 0xff | PASS
+Sent: 0x00 | Received: 0x00 | PASS
+Sent: 0x55 | Received: 0x55 | PASS
+Sent: 0xAA | Received: 0xaa | PASS
+================================================
+           UART RX TEST COMPLETE                
+================================================
+testbench.sv:237: $finish called at 514970000 (1ps)
+Done
